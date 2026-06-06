@@ -5,12 +5,15 @@ import repository.SeatRepository;
 import view.MainView;
 import view.MyReservationView;
 import view.SeatView;
+
+import javax.swing.Timer;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
 public class SeatController {
     private SeatView view;
     private String userId;
+    private Timer remainingTimeTimer;
 
     public SeatController(SeatView view, String userId) {
         this.view = view;
@@ -73,22 +76,66 @@ public class SeatController {
     // 사용 중인 좌석 클릭 시 남은 이용시간 표시
     private void showRemainingTime(int seatNumber) {
         if (ReservationState.isCheckedIn() && ReservationState.getSeatNumber() == seatNumber) {
-            long remaining = 21600 - Duration.between(
-                    ReservationState.getCheckedInAt(), LocalDateTime.now()).getSeconds();
-            long h = remaining / 3600;
-            long m = (remaining % 3600) / 60;
-            long s = remaining % 60;
-            view.showUseRemainingTime(String.format("%02d:%02d:%02d", h, m, s));
+            stopRemainingTimeTimer();
+            SeatView.RemainingTimeDialog dialog = view.showUseRemainingTimeDialog(formatUseRemainingTime());
+            remainingTimeTimer = new Timer(1000, e -> updateRemainingTimeDialog(dialog));
+            dialog.onClose(this::stopRemainingTimeTimer);
+            remainingTimeTimer.start();
+        }
+    }
+
+    private void updateRemainingTimeDialog(SeatView.RemainingTimeDialog dialog) {
+        if (!dialog.isShowing()) {
+            stopRemainingTimeTimer();
+            return;
+        }
+
+        long remaining = getUseRemainingSeconds();
+        if (remaining <= 0) {
+            stopRemainingTimeTimer();
+            ReservationState.clear();
+            dialog.close();
+            view.showSuccessMessage("이용 시간이 종료되어 퇴실처리되었습니다.");
+            return;
+        }
+
+        dialog.updateTime(formatSeconds(remaining));
+    }
+
+    private String formatUseRemainingTime() {
+        return formatSeconds(Math.max(0, getUseRemainingSeconds()));
+    }
+
+    private long getUseRemainingSeconds() {
+        if (ReservationState.getCheckedInAt() == null) {
+            return 0;
+        }
+        return 21600 - Duration.between(ReservationState.getCheckedInAt(), LocalDateTime.now()).getSeconds();
+    }
+
+    private String formatSeconds(long totalSeconds) {
+        long h = totalSeconds / 3600;
+        long m = (totalSeconds % 3600) / 60;
+        long s = totalSeconds % 60;
+        return String.format("%02d:%02d:%02d", h, m, s);
+    }
+
+    private void stopRemainingTimeTimer() {
+        if (remainingTimeTimer != null) {
+            remainingTimeTimer.stop();
+            remainingTimeTimer = null;
         }
     }
 
     private void goBack() {
+        stopRemainingTimeTimer();
         view.dispose();
         MainView mainView = new MainView(userId);
         new MainController(mainView, userId);
     }
 
     private void openMyReservation() {
+        stopRemainingTimeTimer();
         view.dispose();
         MyReservationView myView = new MyReservationView(userId);
         new MyReservationController(myView, userId);

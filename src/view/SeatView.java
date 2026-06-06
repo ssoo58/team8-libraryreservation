@@ -2,6 +2,8 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -168,10 +170,9 @@ public class SeatView extends JFrame {
 
         int finalSeatNumber = seatNumber;
         button.addActionListener(e -> {
-            // 사용 중 좌석은 새 예약 선택 대상이 아니므로 안내만 보여줍니다.
+            // 사용 중 좌석은 새 예약 선택 대상이 아니므로 선택만 막습니다.
             // 남은 사용시간 계산과 표시 호출은 Controller가 담당하고, 필요한 시간 데이터는 Model에서 제공합니다.
             if (AppStyle.SOFT_BLUE.equals(button.getBackground())) {
-                showInUseSeatMessage();
                 return;
             }
 
@@ -270,15 +271,59 @@ public class SeatView extends JFrame {
         currentTimeLabel.setText("현재 시간 " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
     }
 
-    // 입실 중인 좌석을 눌렀을 때 보여주는 단순 안내창입니다.
-    // 남은 이용 시간 계산과 자동 퇴실 판단은 Controller가 담당하고, 필요한 시간 데이터는 Model에서 제공합니다.
-    private void showInUseSeatMessage() {
-        JOptionPane.showMessageDialog(this, "현재 사용 중인 좌석입니다.", "좌석 사용 중", JOptionPane.INFORMATION_MESSAGE);
-    }
-
     // Controller가 계산해서 전달한 남은 사용시간 문구를 다이얼로그로 표시합니다.
     public void showUseRemainingTime(String remainingTimeText) {
         JOptionPane.showMessageDialog(this, "퇴실까지 남은 시간 : " + remainingTimeText, "남은 시간", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // Controller가 1초마다 계산한 남은 사용시간을 갱신해서 보여줄 수 있는 다이얼로그를 만듭니다.
+    public RemainingTimeDialog showUseRemainingTimeDialog(String remainingTimeText) {
+        JDialog dialog = new JDialog(this, "남은 시간", false);
+        JLabel timeLabel = AppStyle.label("퇴실까지 남은 시간 : " + remainingTimeText);
+        timeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        timeLabel.setBorder(BorderFactory.createEmptyBorder(18, 24, 18, 24));
+
+        dialog.add(timeLabel);
+        dialog.setSize(260, 120);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+        return new RemainingTimeDialog(dialog, timeLabel);
+    }
+
+    public static class RemainingTimeDialog {
+        private JDialog dialog;
+        private JLabel timeLabel;
+
+        private RemainingTimeDialog(JDialog dialog, JLabel timeLabel) {
+            this.dialog = dialog;
+            this.timeLabel = timeLabel;
+        }
+
+        public void updateTime(String remainingTimeText) {
+            timeLabel.setText("퇴실까지 남은 시간 : " + remainingTimeText);
+        }
+
+        public boolean isShowing() {
+            return dialog.isShowing();
+        }
+
+        public void close() {
+            dialog.dispose();
+        }
+
+        public void onClose(Runnable action) {
+            dialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    action.run();
+                }
+
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    action.run();
+                }
+            });
+        }
     }
 
     // 이전에 선택했던 좌석 버튼이 있으면 기본 색상으로 되돌립니다.
