@@ -1,14 +1,12 @@
 package view;
 
-import model.ReservationState;
-
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 // 좌석 현황을 보여주고 사용자가 좌석을 선택/예약할 수 있게 하는 View 클래스입니다.
-// 화면 표시와 사용자 입력 처리를 맡고, 예약 상태 변경은 ReservationState(model facade)에 요청합니다.
+// 화면 표시와 사용자 입력을 맡고, 예약 처리와 화면 전환은 Controller가 담당합니다.
 public class SeatView extends JFrame {
     // 24개의 좌석 버튼을 배열로 관리해 좌석 번호와 버튼 인덱스를 쉽게 연결합니다.
     private JButton[] seatButtons;
@@ -80,9 +78,6 @@ public class SeatView extends JFrame {
             seatButtons[i] = createSeatButton(i + 1);
             seatPanel.add(seatButtons[i]);
         }
-        // model에 이미 예약/입실 상태가 있으면 화면 색상에 반영합니다.
-        showCurrentReservation();
-
         // 오른쪽 사이드 패널에는 선택 좌석, 색상 범례, 이동 버튼, 안내 문구를 배치합니다.
         JPanel sidePanel = new JPanel();
         sidePanel.setBackground(AppStyle.PANEL);
@@ -117,23 +112,11 @@ public class SeatView extends JFrame {
         buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         buttonPanel.setMaximumSize(new Dimension(160, 106));
 
-        // 예약 버튼은 현재 선택한 좌석을 기준으로 reserveSelectedSeat()를 실행합니다.
         reserveButton = AppStyle.outlineButton("예약하기", 130, 30);
-        reserveButton.addActionListener(e -> reserveSelectedSeat());
 
-        // 내 예약 확인 화면으로 이동할 때도 현재 사용자 식별값을 넘깁니다.
         myReservationButton = AppStyle.outlineButton("내 예약 확인", 130, 30);
-        myReservationButton.addActionListener(e -> {
-            dispose();
-            new MyReservationView(userId);
-        });
 
-        // 메인 화면으로 돌아갑니다.
         backButton = AppStyle.outlineButton("메인으로", 130, 30);
-        backButton.addActionListener(e -> {
-            dispose();
-            new MainView(userId);
-        });
 
         buttonPanel.add(reserveButton);
         buttonPanel.add(myReservationButton);
@@ -185,9 +168,9 @@ public class SeatView extends JFrame {
 
         int finalSeatNumber = seatNumber;
         button.addActionListener(e -> {
-            // 입실 완료된 본인 좌석은 새 예약 선택 대상이 아니므로 사용 중 안내만 보여줍니다.
+            // 사용 중 좌석은 새 예약 선택 대상이 아니므로 안내만 보여줍니다.
             // 남은 사용시간 계산과 표시 호출은 Controller가 담당하고, 필요한 시간 데이터는 Model에서 제공합니다.
-            if (ReservationState.isCheckedIn() && ReservationState.getSeatNumber() == finalSeatNumber) {
+            if (AppStyle.SOFT_BLUE.equals(button.getBackground())) {
                 showInUseSeatMessage();
                 return;
             }
@@ -247,28 +230,18 @@ public class SeatView extends JFrame {
         return backButton;
     }
 
+    public JButton getMyReservationButton() {
+        return myReservationButton;
+    }
+
     public int getSelectedSeatNumber() {
         return selectedSeatNumber;
     }
 
-    // 사용자가 예약하기 버튼을 눌렀을 때 실행되는 핵심 흐름입니다.
-    private void reserveSelectedSeat() {
-        // model에 현재 사용자의 예약이 이미 있는지 확인합니다.
-        if (ReservationState.hasReservationFor(userId)) {
-            showErrorMessage("하나의 좌석만 예약 가능합니다.");
-            return;
-        }
-
-        // 좌석을 선택하지 않은 상태에서는 예약을 진행하지 않습니다.
-        if (selectedSeatNumber == 0) {
-            showErrorMessage("좌석을 먼저 선택하세요.");
-            return;
-        }
-
-        // 실제 예약 전 사용자에게 한 번 더 확인을 받습니다.
+    public boolean showReserveConfirmDialog(int seatNumber) {
         int result = JOptionPane.showOptionDialog(
                 this,
-                selectedSeatNumber + "번 좌석을 예약하시겠습니까?",
+                seatNumber + "번 좌석을 예약하시겠습니까?",
                 "예약 확인",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE,
@@ -276,15 +249,10 @@ public class SeatView extends JFrame {
                 new String[]{"예", "아니요"},
                 "예"
         );
-        if (result != 0) {
-            return;
-        }
+        return result == 0;
+    }
 
-        // 예약 상태 변경은 model 역할이므로 ReservationState에 요청합니다.
-        // View는 요청 후 화면의 좌석 색상과 선택 표시를 갱신합니다.
-        ReservationState.reserve(userId, selectedSeatNumber);
-        setSeatReserved(selectedSeatNumber);
-        showSuccessMessage(selectedSeatNumber + "번 좌석이 예약되었습니다.\n10분 이내에 입실완료해주세요.");
+    public void clearSelectedSeatInfo() {
         selectedSeatNumber = 0;
         selectedSeatButton = null;
         selectedSeatLabel.setText("없음");
@@ -311,18 +279,6 @@ public class SeatView extends JFrame {
     // Controller가 계산해서 전달한 남은 사용시간 문구를 다이얼로그로 표시합니다.
     public void showUseRemainingTime(String remainingTimeText) {
         JOptionPane.showMessageDialog(this, "퇴실까지 남은 시간 : " + remainingTimeText, "남은 시간", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    // 화면을 열 때 model에 저장된 현재 예약 상태를 좌석 색상에 반영합니다.
-    private void showCurrentReservation() {
-        if (ReservationState.hasReservation()) {
-            int seatNumber = ReservationState.getSeatNumber();
-            if (ReservationState.isCheckedIn()) {
-                setSeatInUse(seatNumber);
-            } else {
-                setSeatReserved(seatNumber);
-            }
-        }
     }
 
     // 이전에 선택했던 좌석 버튼이 있으면 기본 색상으로 되돌립니다.

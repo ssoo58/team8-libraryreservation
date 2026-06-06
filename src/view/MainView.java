@@ -42,21 +42,6 @@ public class MainView extends JFrame {
         myReservationButton = AppStyle.menuButton("내 예약 확인");
         logoutButton = AppStyle.menuButton("로그아웃 / 회원 탈퇴");
 
-        // 버튼 클릭 시 현재 메인 창을 닫고 선택한 화면으로 이동합니다.
-        // userId는 현재 로그인한 사용자 식별값으로 다음 View에 전달됩니다.
-        seatSearchButton.addActionListener(e -> {
-            dispose();
-            new SeatView(userId);
-        });
-        myReservationButton.addActionListener(e -> {
-            dispose();
-            new MyReservationView(userId);
-        });
-        logoutButton.addActionListener(e -> {
-            dispose();
-            new LogoutView(userId);
-        });
-
         buttonPanel.add(seatSearchButton);
         buttonPanel.add(myReservationButton);
         buttonPanel.add(logoutButton);

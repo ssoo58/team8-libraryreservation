@@ -1,12 +1,10 @@
 package view;
 
-import controller.LoginController;
-
 import javax.swing.*;
 import java.awt.*;
 
 // 로그아웃과 회원 탈퇴 메뉴를 보여주는 View 클래스입니다.
-// 실제 회원 데이터 삭제 기능은 아직 연결되어 있지 않고, 현재는 화면 이동과 안내 메시지를 담당합니다.
+// 실제 로그아웃, 회원 탈퇴, 화면 이동 처리는 Controller가 담당합니다.
 public class LogoutView extends JFrame {
     // 현재 로그인한 사용자 식별값입니다. 메인 화면으로 돌아갈 때 다시 전달합니다.
     private String userId;
@@ -48,14 +46,6 @@ public class LogoutView extends JFrame {
         withdrawalButton = AppStyle.menuButton("회원탈퇴하기");
         mainButton = AppStyle.menuButton("메인으로");
 
-        // 각 버튼 클릭 시 실행할 화면 동작을 연결합니다.
-        logoutButton.addActionListener(e -> logout());
-        withdrawalButton.addActionListener(e -> withdraw());
-        mainButton.addActionListener(e -> {
-            dispose();
-            new MainView(this.userId);
-        });
-
         buttonPanel.add(logoutButton);
         buttonPanel.add(withdrawalButton);
         buttonPanel.add(mainButton);
@@ -67,15 +57,19 @@ public class LogoutView extends JFrame {
         setVisible(true);
     }
 
-    // 로그아웃 안내 후 로그인 화면으로 이동합니다.
-    private void logout() {
-        JOptionPane.showMessageDialog(this, "로그아웃되었습니다.", "안내", JOptionPane.INFORMATION_MESSAGE);
-        dispose();
-        openLoginView();
+    public JButton getLogoutButton() {
+        return logoutButton;
     }
 
-    // 회원 탈퇴 확인창을 보여주고, 사용자가 예를 누르면 로그인 화면으로 이동합니다.
-    private void withdraw() {
+    public JButton getWithdrawalButton() {
+        return withdrawalButton;
+    }
+
+    public JButton getMainButton() {
+        return mainButton;
+    }
+
+    public boolean showWithdrawalConfirmDialog() {
         int result = JOptionPane.showOptionDialog(
                 this,
                 "회원탈퇴를 진행할까요?",
@@ -86,16 +80,10 @@ public class LogoutView extends JFrame {
                 new String[]{"예", "아니요"},
                 "예"
         );
-        if (result == 0) {
-            JOptionPane.showMessageDialog(this, "회원탈퇴되었습니다.", "안내", JOptionPane.INFORMATION_MESSAGE);
-            dispose();
-            openLoginView();
-        }
+        return result == 0;
     }
 
-    // 로그인 화면을 열고 LoginController를 다시 연결합니다.
-    private void openLoginView() {
-        LoginView loginView = new LoginView();
-        new LoginController(loginView);
+    public void showInfoMessage(String message) {
+        JOptionPane.showMessageDialog(this, message, "안내", JOptionPane.INFORMATION_MESSAGE);
     }
 }

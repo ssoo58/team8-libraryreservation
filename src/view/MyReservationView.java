@@ -1,13 +1,10 @@
 package view;
 
-import model.ReservationState;
-
 import javax.swing.*;
 import java.awt.*;
-import java.time.format.DateTimeFormatter;
 
 // 사용자의 현재 예약 정보를 보여주고 예약 취소, 입실 완료, 퇴실을 처리하는 View 클래스입니다.
-// 예약 데이터의 실제 변경은 ReservationState에 요청하고, 이 클래스는 화면 갱신과 안내창을 담당합니다.
+// 예약 데이터의 실제 변경은 Controller가 처리하고, 이 클래스는 화면 갱신과 안내창을 담당합니다.
 public class MyReservationView extends JFrame {
     // 예약 상세 정보, 상태, 남은 시간을 화면에 표시하는 컴포넌트입니다.
     private JTextArea reservationInfoArea;
@@ -91,20 +88,11 @@ public class MyReservationView extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
         buttonPanel.setBackground(AppStyle.PANEL);
 
-        // 예약 전이면 예약 취소, 입실 후면 퇴실하기 역할을 합니다.
         cancelButton = AppStyle.outlineButton("예약 취소", 82, 30);
-        cancelButton.addActionListener(e -> cancelReservation());
 
-        // 메인 화면으로 돌아갑니다.
         mainButton = AppStyle.outlineButton("메인으로", 82, 30);
-        mainButton.addActionListener(e -> {
-            dispose();
-            new MainView(userId);
-        });
 
-        // 예약 상태를 입실 완료 상태로 바꿉니다.
         checkInButton = AppStyle.outlineButton("입실 완료", 82, 30);
-        checkInButton.addActionListener(e -> checkInReservation());
 
         buttonPanel.add(cancelButton);
         buttonPanel.add(mainButton);
@@ -115,8 +103,6 @@ public class MyReservationView extends JFrame {
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         add(mainPanel);
-        // 화면이 열리자마자 model의 현재 예약 상태를 읽어 표시합니다.
-        updateReservationView();
         setVisible(true);
     }
 
@@ -163,16 +149,7 @@ public class MyReservationView extends JFrame {
         timeLeftLabel.setText("");
     }
 
-    // 예약 취소 또는 입실 후 퇴실하기 버튼을 눌렀을 때 실행됩니다.
-    private void cancelReservation() {
-        // 현재 사용자에게 예약이 없으면 더 진행하지 않고 오류 메시지를 보여줍니다.
-        if (!ReservationState.hasReservationFor(userId)) {
-            showErrorMessage("예약된 좌석이 없습니다.");
-            return;
-        }
-
-        // 입실 상태에 따라 버튼 의미와 확인 메시지를 다르게 보여줍니다.
-        boolean checkedIn = ReservationState.isCheckedIn();
+    public boolean showCancelConfirmDialog(boolean checkedIn) {
         int result = JOptionPane.showOptionDialog(
                 this,
                 checkedIn ? "사용을 중단하시겠습니까?" : "예약 취소하시겠습니까?",
@@ -183,49 +160,19 @@ public class MyReservationView extends JFrame {
                 new String[]{"예", "아니요"},
                 "예"
         );
-        if (result == 0) {
-            // 실제 예약 삭제와 좌석 해제는 model에 요청합니다.
-            ReservationState.clear();
-            clearReservationInfo();
-            showSuccessMessage(checkedIn ? "퇴실 처리되었습니다." : "예약 취소되었습니다.");
-        }
+        return result == 0;
     }
 
-    // 예약 상태를 입실 완료 상태로 변경합니다.
-    private void checkInReservation() {
-        if (!ReservationState.hasReservationFor(userId)) {
-            showErrorMessage("예약된 좌석이 없습니다.");
-            return;
-        }
-
-        // 실제 상태 변경은 ReservationState가 처리하고, View는 변경된 결과를 다시 그립니다.
-        ReservationState.checkIn();
-        updateReservationView();
-        showSuccessMessage("입실 처리되었습니다.");
-    }
-
-    // model의 예약 상태를 읽어 화면의 텍스트, 색상, 버튼 상태를 갱신합니다.
-    private void updateReservationView() {
-        if (!ReservationState.hasReservationFor(userId)) {
-            clearReservationInfo();
-            return;
-        }
-
-        int seatNumber = ReservationState.getSeatNumber();
-        boolean checkedIn = ReservationState.isCheckedIn();
+    public void showReservationInfo(int seatNumber, boolean checkedIn, String timeText) {
         statusLabel.setText("좌석 : " + seatNumber + "번   상태 : " + (checkedIn ? "입실 완료" : "예약 완료"));
         statusLabel.setBackground(checkedIn ? AppStyle.SOFT_BLUE : AppStyle.SOFT_PINK);
         cancelButton.setText(checkedIn ? "퇴실하기" : "예약 취소");
         checkInButton.setEnabled(!checkedIn);
 
-        // 입실 완료 상태와 예약 완료 상태는 보여줄 시간 정보가 다릅니다.
-        // 제한 시간 계산과 자동 취소/퇴실 판단은 Controller가 담당하고, 실제 상태 변경은 Model에 요청합니다.
         if (checkedIn) {
-            String checkedInAt = ReservationState.getCheckedInAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-            reservationInfoArea.setText("예약자 : " + userId + "\n입실 시간 : " + checkedInAt);
+            reservationInfoArea.setText("예약자 : " + userId + "\n입실 시간 : " + timeText);
         } else {
-            String reservedAt = ReservationState.getReservedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-            reservationInfoArea.setText("예약자 : " + userId + "\n예약 시간 : " + reservedAt);
+            reservationInfoArea.setText("예약자 : " + userId + "\n예약 시간 : " + timeText);
         }
     }
 

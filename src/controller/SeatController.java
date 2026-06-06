@@ -3,15 +3,16 @@ package controller;
 import model.ReservationState;
 import repository.SeatRepository;
 import view.MainView;
+import view.MyReservationView;
 import view.SeatView;
 
 public class SeatController {
     private SeatView view;
-    private String userName;
+    private String userId;
 
-    public SeatController(SeatView view, String userName) {
+    public SeatController(SeatView view, String userId) {
         this.view = view;
-        this.userName = userName;
+        this.userId = userId;
         initListeners();
         loadSeats();
     }
@@ -19,6 +20,7 @@ public class SeatController {
     private void initListeners() {
         view.getReserveButton().addActionListener(e -> reserve());
         view.getBackButton().addActionListener(e -> goBack());
+        view.getMyReservationButton().addActionListener(e -> openMyReservation());
     }
 
     private void loadSeats() {
@@ -38,7 +40,7 @@ public class SeatController {
     }
 
     private void reserve() {
-        if (ReservationState.hasReservationFor(userName)) {
+        if (ReservationState.hasReservationFor(userId)) {
             view.showErrorMessage("이미 예약된 좌석이 있습니다.");
             return;
         }
@@ -49,13 +51,25 @@ public class SeatController {
             return;
         }
 
-        ReservationState.reserve(userName, seatNumber);
+        if (!view.showReserveConfirmDialog(seatNumber)) {
+            return;
+        }
+
+        ReservationState.reserve(userId, seatNumber);
         view.setSeatReserved(seatNumber);
         view.showSuccessMessage(seatNumber + "번 좌석이 예약되었습니다.\n10분 이내에 입실완료해주세요.");
+        view.clearSelectedSeatInfo();
     }
 
     private void goBack() {
         view.dispose();
-        new MainView(userName);
+        MainView mainView = new MainView(userId);
+        new MainController(mainView, userId);
+    }
+
+    private void openMyReservation() {
+        view.dispose();
+        MyReservationView myView = new MyReservationView(userId);
+        new MyReservationController(myView, userId);
     }
 }
