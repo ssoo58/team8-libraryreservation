@@ -1,6 +1,7 @@
 package controller;
 
 import repository.MemberRepository;
+import model.ReservationState;
 import view.LoginView;
 import view.LogoutView;
 import view.MainView;
@@ -33,6 +34,9 @@ public class LogoutController {
             return;
         }
 
+        if (ReservationState.hasReservationFor(userId)) {
+            ReservationState.clear();
+        }
         MemberRepository.getInstance().withdraw(userId);
         view.showInfoMessage("회원탈퇴되었습니다.");
         view.dispose();

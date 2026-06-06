@@ -63,6 +63,11 @@ public class SeatController {
             return;
         }
 
+        if (!ReservationState.isReservableTime()) {
+            view.showErrorMessage("예약 가능 시간이 아닙니다.\n예약 가능 시간 : 9:00~22:00");
+            return;
+        }
+
         if (!view.showReserveConfirmDialog(seatNumber)) {
             return;
         }
