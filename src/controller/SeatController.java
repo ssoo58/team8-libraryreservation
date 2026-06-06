@@ -56,6 +56,11 @@ public class SeatController {
 
     // 선택한 좌석을 예약하고 View에 결과를 반영합니다.
     private void reserve() {
+        if (!ReservationState.isReservableTime()) {
+        view.showErrorMessage("예약 가능한 시간이 아닙니다.\n(운영시간 09:00 ~ 22:00)");
+        return;
+        }
+   
         if (ReservationState.hasReservationFor(userId)) {
             view.showErrorMessage("하나의 좌석만 예약 가능합니다.");
             return;
