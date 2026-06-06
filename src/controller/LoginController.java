@@ -76,6 +76,6 @@ public class LoginController {
     private void openLogin(SignupView signupView) {
         signupView.dispose();
         LoginView loginView = new LoginView();
-        new LoginController(loginView);
+        new LoginController(loginView); //<-수정 
     }
 }
