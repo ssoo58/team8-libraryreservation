@@ -4,6 +4,7 @@ import repository.ReservationRepository;
 import repository.SeatRepository;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 /**
  * View 가 호출하는 정적(static) 파사드(Facade) 클래스
@@ -72,6 +73,12 @@ public class ReservationState {
     /** 입실 시간 */
     public static LocalDateTime getCheckedInAt() {
         return currentReservation == null ? null : currentReservation.getCheckedInAt();
+    }
+
+    /** 예약 가능 시간(09:00~22:00) 여부 */
+    public static boolean isReservableTime() {
+        LocalTime now = LocalTime.now();
+        return !now.isBefore(LocalTime.of(9, 0)) && now.isBefore(LocalTime.of(22, 0));
     }
 
     /**
