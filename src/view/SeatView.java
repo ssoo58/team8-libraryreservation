@@ -271,11 +271,6 @@ public class SeatView extends JFrame {
         currentTimeLabel.setText("현재 시간 " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
     }
 
-    // Controller가 계산해서 전달한 남은 사용시간 문구를 다이얼로그로 표시합니다.
-    public void showUseRemainingTime(String remainingTimeText) {
-        JOptionPane.showMessageDialog(this, "퇴실까지 남은 시간 : " + remainingTimeText, "남은 시간", JOptionPane.INFORMATION_MESSAGE);
-    }
-
     // Controller가 1초마다 계산한 남은 사용시간을 갱신해서 보여줄 수 있는 다이얼로그를 만듭니다.
     public RemainingTimeDialog showUseRemainingTimeDialog(String remainingTimeText) {
         JDialog dialog = new JDialog(this, "남은 시간", false);

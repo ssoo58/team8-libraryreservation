@@ -1,14 +1,14 @@
 package controller;
 
+import model.Reservation;
 import model.ReservationState;
+import repository.ReservationRepository;
 import repository.SeatRepository;
 import view.MainView;
 import view.MyReservationView;
 import view.SeatView;
 
 import javax.swing.Timer;
-import java.time.Duration;
-import java.time.LocalDateTime;
 
 public class SeatController {
     private SeatView view;
@@ -53,7 +53,7 @@ public class SeatController {
 
     private void reserve() {
         if (ReservationState.hasReservationFor(userId)) {
-            view.showErrorMessage("이미 예약된 좌석이 있습니다.");
+            view.showErrorMessage("하나의 좌석만 예약 가능합니다.");
             return;
         }
 
@@ -75,42 +75,45 @@ public class SeatController {
 
     // 사용 중인 좌석 클릭 시 남은 이용시간 표시
     private void showRemainingTime(int seatNumber) {
-        if (ReservationState.isCheckedIn() && ReservationState.getSeatNumber() == seatNumber) {
+        Reservation reservation = ReservationRepository.getInstance().findBySeatNumber(seatNumber);
+        if (reservation != null && reservation.isCheckedIn()) {
             stopRemainingTimeTimer();
-            SeatView.RemainingTimeDialog dialog = view.showUseRemainingTimeDialog(formatUseRemainingTime());
-            remainingTimeTimer = new Timer(1000, e -> updateRemainingTimeDialog(dialog));
+            SeatView.RemainingTimeDialog dialog = view.showUseRemainingTimeDialog(formatUseRemainingTime(seatNumber));
+            remainingTimeTimer = new Timer(1000, e -> updateRemainingTimeDialog(seatNumber, dialog));
             dialog.onClose(this::stopRemainingTimeTimer);
             remainingTimeTimer.start();
         }
     }
 
-    private void updateRemainingTimeDialog(SeatView.RemainingTimeDialog dialog) {
+    private void updateRemainingTimeDialog(int seatNumber, SeatView.RemainingTimeDialog dialog) {
         if (!dialog.isShowing()) {
             stopRemainingTimeTimer();
             return;
         }
 
-        long remaining = getUseRemainingSeconds();
+        long remaining = getUseRemainingSeconds(seatNumber);
         if (remaining <= 0) {
             stopRemainingTimeTimer();
-            ReservationState.clear();
+            ReservationRepository.getInstance().checkExpiredReservations();
+            loadSeats();
             dialog.close();
-            view.showSuccessMessage("이용 시간이 종료되어 퇴실처리되었습니다.");
+            view.showSuccessMessage("이용 시간이 종료된 좌석입니다.");
             return;
         }
 
         dialog.updateTime(formatSeconds(remaining));
     }
 
-    private String formatUseRemainingTime() {
-        return formatSeconds(Math.max(0, getUseRemainingSeconds()));
+    private String formatUseRemainingTime(int seatNumber) {
+        return formatSeconds(Math.max(0, getUseRemainingSeconds(seatNumber)));
     }
 
-    private long getUseRemainingSeconds() {
-        if (ReservationState.getCheckedInAt() == null) {
+    private long getUseRemainingSeconds(int seatNumber) {
+        Reservation reservation = ReservationRepository.getInstance().findBySeatNumber(seatNumber);
+        if (reservation == null || !reservation.isCheckedIn()) {
             return 0;
         }
-        return 21600 - Duration.between(ReservationState.getCheckedInAt(), LocalDateTime.now()).getSeconds();
+        return reservation.getRemainingUseSeconds();
     }
 
     private String formatSeconds(long totalSeconds) {
