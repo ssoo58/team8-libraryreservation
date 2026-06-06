@@ -29,12 +29,12 @@ public class MainController {
 
     private void openMyReservation() {
         view.dispose();
-        new MyReservationView(userName);
+        MyReservationView myView = new MyReservationView(userName);
+        new MyReservationController(myView, userName);
     }
 
     private void openLogout() {
         view.dispose();
-        MyReservationView myView = new MyReservationView(userName); 
-        new MyReservationController(myView, userName);   
+        new LogoutView(userName);
     }
 }
