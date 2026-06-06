@@ -5,7 +5,6 @@ import model.ReservationState;
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 public class SeatView extends JFrame {
@@ -227,9 +226,9 @@ public class SeatView extends JFrame {
             return;
         }
 
-        // TODO: 실제 운영 단계에서는 아래 예약 가능 시간 검사를 다시 활성화해야 합니다.
+        // TODO: model에서 예약 가능 시간 검사 메서드를 제공하면 아래 로직을 연결해야 합니다.
         // 테스트 중에는 09:00~22:00 밖에서도 예약 흐름을 확인할 수 있도록 막지 않습니다.
-        // if (!isReservableTime()) {
+        // if (!ReservationState.isReservableTime()) {
         //     showUnavailableTimeDialog();
         //     return;
         // }
@@ -254,11 +253,6 @@ public class SeatView extends JFrame {
         selectedSeatNumber = 0;
         selectedSeatButton = null;
         selectedSeatLabel.setText("없음");
-    }
-
-    private boolean isReservableTime() {
-        LocalTime now = LocalTime.now();
-        return !now.isBefore(LocalTime.of(9, 0)) && now.isBefore(LocalTime.of(22, 0));
     }
 
     private void showUnavailableTimeDialog() {

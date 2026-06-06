@@ -6,13 +6,13 @@ import javax.swing.*;
 import java.awt.*;
 
 public class LogoutView extends JFrame {
-    private String userName;
+    private String userId;
     private JButton logoutButton;
     private JButton withdrawalButton;
     private JButton mainButton;
 
-    public LogoutView(String userName) {
-        this.userName = userName;
+    public LogoutView(String userId) {
+        this.userId = userId;
         setTitle("로그아웃 / 회원 탈퇴");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(720, 430);
@@ -41,7 +41,7 @@ public class LogoutView extends JFrame {
         withdrawalButton.addActionListener(e -> withdraw());
         mainButton.addActionListener(e -> {
             dispose();
-            new MainView(userName);
+            new MainView(this.userId);
         });
 
         buttonPanel.add(logoutButton);
