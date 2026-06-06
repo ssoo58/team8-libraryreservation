@@ -41,6 +41,7 @@ public class LoginController {
 
     private void openSignup() {
         view.dispose();
-        new SignupView();
+        SignupView signupView = new SignupView();
+        new SignupController(signupView);
     }
 }
