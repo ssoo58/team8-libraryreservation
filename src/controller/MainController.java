@@ -23,7 +23,8 @@ public class MainController {
 
     private void openSeatView() {
         view.dispose();
-        new SeatView(userName);
+        SeatView seatView = new SeatView(userName);
+        new SeatController(seatView, userName);
     }
 
     private void openMyReservation() {
@@ -33,6 +34,7 @@ public class MainController {
 
     private void openLogout() {
         view.dispose();
-        new LogoutView(userName);
+        MyReservationView myView = new MyReservationView(userName); 
+        new MyReservationController(myView, userName);   
     }
 }
