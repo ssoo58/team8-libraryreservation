@@ -6,18 +6,12 @@ import java.awt.*;
 // 로그아웃과 회원 탈퇴 메뉴를 보여주는 View 클래스입니다.
 // 실제 로그아웃, 회원 탈퇴, 화면 이동 처리는 Controller가 담당합니다.
 public class LogoutView extends JFrame {
-    // 현재 로그인한 사용자 식별값입니다. 메인 화면으로 돌아갈 때 다시 전달합니다.
-    private String userId;
-
     // 로그아웃, 회원 탈퇴, 메인 이동 버튼입니다.
     private JButton logoutButton;
     private JButton withdrawalButton;
     private JButton mainButton;
 
     public LogoutView(String userId) {
-        // 다른 화면에서 전달받은 사용자 식별값을 저장합니다.
-        this.userId = userId;
-
         // 로그아웃/회원 탈퇴 화면의 기본 창 설정입니다.
         setTitle("로그아웃 / 회원 탈퇴");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

@@ -22,9 +22,6 @@ public class SeatView extends JFrame {
     // 아직 좌석을 선택하지 않았을 때는 0이고, 좌석 클릭 시 해당 좌석 번호가 저장됩니다.
     private int selectedSeatNumber;
 
-    // 현재 로그인한 사용자 ID입니다.
-    private String userId;
-
     // 이전에 선택한 좌석 버튼 색을 원래대로 돌리기 위해 보관합니다.
     private JButton selectedSeatButton;
 
@@ -38,9 +35,6 @@ public class SeatView extends JFrame {
     }
 
     public SeatView(String userId) {
-        // MainView에서 전달받은 로그인 사용자 식별값을 저장합니다.
-        this.userId = userId;
-
         // 좌석 조회/예약 화면의 기본 창 설정입니다.
         setTitle("좌석 조회 및 예약");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
