@@ -1,2 +1,73 @@
-# team8-libraryreservation
-Java OOP project | Library seat reservation system (MVC pattern)
+# 도서관 좌석 예약 시스템
+
+Java Swing과 MVC 패턴으로 구현한 도서관 좌석 예약 프로그램입니다. 회원별로 좌석을 예약하고, 입실·퇴실 및 예약 현황을 관리할 수 있습니다.
+
+## 주요 기능
+
+- 회원가입, 로그인, 로그아웃, 회원 탈퇴
+- 24개 좌석의 실시간 상태 조회
+- 운영 시간(09:00~22:00) 내 좌석 예약
+- 사용자당 하나의 좌석만 예약 가능
+- 예약 후 10분 이내 입실 및 미입실 예약 자동 취소
+- 입실 후 최대 6시간 이용 및 만료 시 자동 퇴실
+- 예약 취소, 입실 완료, 퇴실 처리
+- 회원·좌석·예약 정보를 텍스트 파일에 저장
+
+## 프로젝트 구조
+
+```text
+src/
+├── Main.java                 # 프로그램 시작점
+├── controller/               # 사용자 입력과 화면 전환 처리
+├── model/                    # 회원, 좌석, 예약 도메인 모델
+├── repository/               # 데이터 조회·저장 및 파일 영속화
+└── view/                     # Java Swing UI
+```
+
+각 계층은 MVC 구조로 역할을 분리했습니다. `Repository<T, ID>` 인터페이스를 회원, 좌석, 예약 저장소가 구현하며, `ReservationState`가 현재 로그인 사용자의 예약 상태를 관리하는 파사드 역할을 합니다.
+
+## 실행 환경
+
+- JDK 8 이상
+- 별도의 외부 라이브러리나 빌드 도구 없음
+
+## 실행 방법
+
+저장소 루트에서 다음 명령을 실행합니다.
+
+### Windows PowerShell
+
+```powershell
+New-Item -ItemType Directory -Force out | Out-Null
+javac -encoding UTF-8 -d out (Get-ChildItem src -Recurse -Filter *.java).FullName
+java -cp out Main
+```
+
+### macOS / Linux
+
+```bash
+mkdir -p out
+javac -encoding UTF-8 -d out $(find src -name '*.java')
+java -cp out Main
+```
+
+프로그램을 처음 실행하면 저장소 루트에 아래 데이터 파일이 자동으로 생성됩니다.
+
+- `members.txt`: 회원 정보
+- `seats.txt`: 좌석 상태
+- `reservations.txt`: 예약 정보
+
+데이터 파일은 프로그램을 실행한 현재 디렉터리를 기준으로 읽고 씁니다.
+
+## 이용 흐름
+
+1. 회원가입 후 로그인합니다.
+2. **좌석 조회 및 예약**에서 예약 가능한 좌석을 선택합니다.
+3. 예약 후 10분 이내에 **내 예약 확인**에서 입실을 완료합니다.
+4. 이용을 마치면 **퇴실하기**를 선택합니다.
+
+## 유의 사항
+
+- 좌석 예약은 09:00 이상 22:00 미만에만 가능합니다.
+- 예약 정보는 30초 주기로 만료 여부를 검사하므로 자동 취소·퇴실 반영에 최대 30초가 걸릴 수 있습니다.
+- 회원 비밀번호는 학습용 프로젝트 특성상 텍스트 파일에 평문으로 저장됩니다. 실제 서비스에서는 비밀번호 해시와 데이터베이스를 사용해야 합니다.
